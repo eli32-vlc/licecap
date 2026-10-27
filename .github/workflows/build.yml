@@ -1,0 +1,46 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      # SWELL's resource generator (swell_resgen.sh) runs on licecap.rc at build time
+      - name: Ensure PHP
+        run: command -v php || brew install php
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project licecap/licecap.xcodeproj \
+            -target licecap \
+            -configuration Release \
+            SYMROOT="$PWD/build" \
+            OBJROOT="$PWD/build/obj" \
+            MACOSX_DEPLOYMENT_TARGET=10.13 \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Verify + package
+        run: |
+          APP=$(find "$PWD/build" -maxdepth 3 -name "*.app" -type d | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::No .app product produced by build"
+            exit 1
+          fi
+          echo "Built: $APP"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" LICEcap-macOS.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LICEcap-macOS
+          path: LICEcap-macOS.zip
