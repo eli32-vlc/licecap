@@ -78,6 +78,8 @@
 
 #include "resource.h"
 
+#include "steps.h"
+
 HINSTANCE g_hInst;
 
 
@@ -171,7 +173,7 @@ public:
 
 
 
-int g_prefs; // &1=title frame, &2=giant font, &4=record mousedown, &8=timeline, &16=shift+space pause, &32=transparency-fu
+int g_prefs; // &1=title frame, &2=giant font, &4=record mousedown, &8=timeline, &16=shift+space pause, &32=transparency-fu, &64=stop-after, &128=text guide
 int g_stop_after_msec;
 
 
@@ -371,6 +373,7 @@ bool g_frate_valid;
 double g_frate_avg;
 DWORD g_ms_written;
 int g_cap_state; // 1=rec, 2=pause
+static bool s_guide_rec; // text guide enabled when the current recording started
 
 #define PREROLL_AMT 3000
 DWORD g_cap_prerolluntil;
@@ -674,6 +677,35 @@ void Capture_Finish(HWND hwndDlg)
     SWELL_SetWindowResizeable(hwndDlg,true);
 #endif
     g_cap_state=0;
+
+    // text guide: finalize and write <rec>_steps.html next to the recording
+    Steps_OnRecordStop();
+    if (s_guide_rec)
+    {
+      s_guide_rec = false;
+      char guidepath[2048];
+      guidepath[0] = 0;
+      if (Steps_Count() < 1)
+      {
+        MessageBox(hwndDlg,
+          "No steps were recorded for the text guide.\n\n"
+          "If the guide option was on, check System Settings > Privacy & Security: "
+          "grant Input Monitoring (and Accessibility for detailed steps) to LICEcap.",
+          "LICEcap", MB_OK | MB_ICONWARNING);
+      }
+      else if (Steps_Export(g_last_fn, guidepath, sizeof(guidepath)))
+      {
+        char guidebuf[2304];
+        snprintf(guidebuf, sizeof(guidebuf), "Text guide written to:\n%s", guidepath);
+        MessageBox(hwndDlg, guidebuf, "LICEcap", MB_OK | MB_ICONINFORMATION);
+      }
+      else
+      {
+        MessageBox(hwndDlg,
+          "Could not write the text guide file (check folder permissions).",
+          "LICEcap", MB_OK | MB_ICONWARNING);
+      }
+    }
   }
 
   UpdateDimBoxes(hwndDlg);
@@ -771,6 +803,7 @@ static UINT_PTR CALLBACK SaveOptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
       if (g_prefs&8) CheckDlgButton(hwndDlg, IDC_TIMELINE, BST_CHECKED);
       if (g_prefs&16) CheckDlgButton(hwndDlg, IDC_SSPAUSE, BST_CHECKED);
       if (g_prefs&32) CheckDlgButton(hwndDlg, IDC_CHECK1, BST_CHECKED);
+      if (g_prefs&128) CheckDlgButton(hwndDlg, IDC_TEXTGUIDE, BST_CHECKED);
       
 
       if (g_prefs&64) 
@@ -808,6 +841,7 @@ static UINT_PTR CALLBACK SaveOptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
       if (IsDlgButtonChecked(hwndDlg, IDC_SSPAUSE)) g_prefs |= 16;
       if (IsDlgButtonChecked(hwndDlg, IDC_CHECK1)) g_prefs |= 32;
       if (IsDlgButtonChecked(hwndDlg, IDC_CHECK2)) g_prefs |= 64;
+      if (IsDlgButtonChecked(hwndDlg, IDC_TEXTGUIDE)) g_prefs |= 128;
 
       char buf[256];
       GetDlgItemText(hwndDlg, IDC_MS, buf, sizeof(buf));
@@ -837,6 +871,10 @@ static UINT_PTR CALLBACK SaveOptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
             EnableWindow(GetDlgItem(hwndDlg,IDC_STOPAFTER_SEC),use);
           }
         break;
+        case IDC_TEXTGUIDE:
+          if (IsDlgButtonChecked(hwndDlg, IDC_TEXTGUIDE))
+            Steps_RequestPermissions(true); // trigger Input Monitoring / AX prompts now
+          return 0;
         case IDC_TITLEUSE:
         {
           bool use = !!IsDlgButtonChecked(hwndDlg, IDC_TITLEUSE);
@@ -1225,7 +1263,9 @@ static WDL_DLGRET liceCapMainProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
             if (GetScreenData(r2.left,wdl_min(r2.top,r2.bottom),g_cap_bm_inv?g_cap_bm_inv:g_cap_bm))
             {
               void DoMouseCursor(LICE_IBitmap *,int,int);
-              DoMouseCursor(g_cap_bm_inv?g_cap_bm_inv:g_cap_bm,-(r2.left+1),-(r2.bottom+1));                        
+              DoMouseCursor(g_cap_bm_inv?g_cap_bm_inv:g_cap_bm,-(r2.left+1),-(r2.bottom+1));
+              // feed the step recorder: same rect origin as GetScreenData() above
+              Steps_OnFrame(g_cap_bm, r2.left, wdl_min(r2.top,r2.bottom), now);                        
 #endif
               const bool dotime = !!(g_prefs&8);
 
@@ -1711,6 +1751,8 @@ static WDL_DLGRET liceCapMainProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
                 g_ms_written = 0;
 
                 g_last_frame_capture_time = g_cap_prerolluntil = timeGetTime()+PREROLL_AMT;
+                s_guide_rec = !!(g_prefs&128);
+                Steps_OnRecordStart(s_guide_rec);
                 g_cap_state=1;
                 UpdateCaption(hwndDlg);
                 UpdateStatusText(hwndDlg);
@@ -1725,6 +1767,7 @@ static WDL_DLGRET liceCapMainProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
             ShowWindow(GetDlgItem(hwndDlg,IDC_STATUS),SW_HIDE);
             SetDlgItemText(hwndDlg,IDC_REC,"[unpause]");
             g_cap_state=2;
+            Steps_OnRecordPause();
             UpdateCaption(hwndDlg);
             UpdateStatusText(hwndDlg);
           }
@@ -1738,6 +1781,7 @@ static WDL_DLGRET liceCapMainProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
             SetDlgItemText(hwndDlg,IDC_REC,"[pause]");
             g_last_frame_capture_time = g_cap_prerolluntil=timeGetTime()+PREROLL_AMT;
             g_cap_state=1;
+            Steps_OnRecordResume();
             UpdateCaption(hwndDlg);
             UpdateStatusText(hwndDlg);
           }

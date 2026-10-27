@@ -49,6 +49,8 @@
 		332A9BD513CB5B6E00EBEB86 /* wndsize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 332A9BD413CB5B6E00EBEB86 /* wndsize.cpp */; };
 		332A9BFB13CB5D7200EBEB86 /* filebrowse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 332A9BFA13CB5D7200EBEB86 /* filebrowse.cpp */; };
 		332A9CA913CB829300EBEB86 /* capturewindow.mm in Sources */ = {isa = PBXBuildFile; fileRef = 332A9CA813CB829300EBEB86 /* capturewindow.mm */; };
+		5745545300000000000000B1 /* steps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5745545300000000000000A1 /* steps.cpp */; };
+		5745545300000000000000B2 /* steps_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5745545300000000000000A2 /* steps_mac.mm */; };
 		332A9F7A13CB982800EBEB86 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332A9F7913CB982800EBEB86 /* OpenGL.framework */; };
 		332AA01113CB9EB800EBEB86 /* licecap.icns in Resources */ = {isa = PBXBuildFile; fileRef = 332AA01013CB9EB800EBEB86 /* licecap.icns */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
@@ -131,6 +133,9 @@
 		332A9BD413CB5B6E00EBEB86 /* wndsize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = wndsize.cpp; path = ../WDL/wingui/wndsize.cpp; sourceTree = SOURCE_ROOT; };
 		332A9BFA13CB5D7200EBEB86 /* filebrowse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = filebrowse.cpp; path = ../WDL/filebrowse.cpp; sourceTree = SOURCE_ROOT; };
 		332A9CA813CB829300EBEB86 /* capturewindow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = capturewindow.mm; sourceTree = "<group>"; };
+		5745545300000000000000A1 /* steps.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = steps.cpp; sourceTree = "<group>"; };
+		5745545300000000000000A2 /* steps_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = steps_mac.mm; sourceTree = "<group>"; };
+		5745545300000000000000A3 /* steps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = steps.h; sourceTree = "<group>"; };
 		332A9F7913CB982800EBEB86 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		332AA01013CB9EB800EBEB86 /* licecap.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = licecap.icns; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* licecap-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "licecap-Info.plist"; sourceTree = "<group>"; };
@@ -206,6 +211,9 @@
 				256AC3F00F4B6AF500CF3369 /* licecap_Prefix.pch */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
 				332A9CA813CB829300EBEB86 /* capturewindow.mm */,
+				5745545300000000000000A1 /* steps.cpp */,
+				5745545300000000000000A2 /* steps_mac.mm */,
+				5745545300000000000000A3 /* steps.h */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -457,6 +465,8 @@
 				332A9BD513CB5B6E00EBEB86 /* wndsize.cpp in Sources */,
 				332A9BFB13CB5D7200EBEB86 /* filebrowse.cpp in Sources */,
 				332A9CA913CB829300EBEB86 /* capturewindow.mm in Sources */,
+				5745545300000000000000B1 /* steps.cpp in Sources */,
+				5745545300000000000000B2 /* steps_mac.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -490,6 +500,7 @@
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "LICECAP_STEPS=1";
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -506,6 +517,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_PREPROCESSOR_DEFINITIONS = "LICECAP_STEPS=1";
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = licecap_Prefix.pch;
